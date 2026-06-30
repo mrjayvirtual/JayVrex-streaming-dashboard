@@ -1,4 +1,17 @@
-import React, { useState, useMemo } from 'react';
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>JayVrex Streaming Dashboard</title>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body style="margin:0;">
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useMemo } = React;
 
 const TRACKS = [
   { name: 'Spiritwalker', streams: 18420, skipRate: 0.21, completion: 0.79, platform: 'Spotify', saves: 1240, country: 'Nigeria' },
@@ -35,7 +48,7 @@ function weightedSkipRate(rows) {
   return totalStreams ? weighted / totalStreams : 0;
 }
 
-export default function JayVrexDashboard() {
+function JayVrexDashboard() {
   const [platformFilter, setPlatformFilter] = useState('All');
 
   const filtered = useMemo(
@@ -99,7 +112,6 @@ export default function JayVrexDashboard() {
         ))}
       </div>
 
-      {/* Hero: total streams, the viral number */}
       <div className="card" style={{ padding: '20px 16px', marginBottom: 10, position: 'relative', overflow: 'hidden' }}>
         <div style={{
           position: 'absolute', top: -40, right: -40, width: 140, height: 140, borderRadius: '50%',
@@ -123,7 +135,6 @@ export default function JayVrexDashboard() {
         </div>
       </div>
 
-      {/* Signature element: skip rate as the analyst insight card */}
       <div className="card" style={{ padding: '16px 16px', marginBottom: 14, borderColor: '#3A3326' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
           <div>
@@ -143,7 +154,6 @@ export default function JayVrexDashboard() {
         </div>
       </div>
 
-      {/* Weekly trend */}
       <div className="card" style={{ padding: '16px 14px', marginBottom: 14 }}>
         <div style={{ fontSize: 11, color: '#8A7E68', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 14 }}>Weekly Stream Growth</div>
         <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6, height: 100 }}>
@@ -161,7 +171,6 @@ export default function JayVrexDashboard() {
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 14 }}>
-        {/* By track */}
         <div className="card" style={{ padding: '16px 14px' }}>
           <div style={{ fontSize: 11, color: '#8A7E68', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 }}>Streams by Track</div>
           {byTrack.map((t, i) => (
@@ -177,7 +186,6 @@ export default function JayVrexDashboard() {
           ))}
         </div>
 
-        {/* By platform donut-ish bars */}
         <div className="card" style={{ padding: '16px 14px' }}>
           <div style={{ fontSize: 11, color: '#8A7E68', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 }}>Streams by Platform</div>
           {byPlatform.map((p, i) => (
@@ -191,7 +199,6 @@ export default function JayVrexDashboard() {
           ))}
         </div>
 
-        {/* Top cities */}
         <div className="card" style={{ padding: '16px 14px' }}>
           <div style={{ fontSize: 11, color: '#8A7E68', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 }}>Top Listener Cities</div>
           {CITIES.map((c, i) => (
@@ -212,3 +219,8 @@ export default function JayVrexDashboard() {
     </div>
   );
 }
+
+ReactDOM.createRoot(document.getElementById('root')).render(<JayVrexDashboard />);
+</script>
+</body>
+</html>
