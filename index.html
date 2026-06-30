@@ -1,0 +1,214 @@
+import React, { useState, useMemo } from 'react';
+
+const TRACKS = [
+  { name: 'Spiritwalker', streams: 18420, skipRate: 0.21, completion: 0.79, platform: 'Spotify', saves: 1240, country: 'Nigeria' },
+  { name: 'Skendelenbosha', streams: 31650, skipRate: 0.14, completion: 0.86, platform: 'Spotify', saves: 2890, country: 'Nigeria' },
+  { name: 'Spiritwalker', streams: 4210, skipRate: 0.31, completion: 0.69, platform: 'Apple Music', saves: 180, country: 'UK' },
+  { name: 'Skendelenbosha', streams: 9870, skipRate: 0.18, completion: 0.82, platform: 'Apple Music', saves: 610, country: 'Nigeria' },
+  { name: 'Skendelenbosha', streams: 6340, skipRate: 0.22, completion: 0.78, platform: 'Audiomack', saves: 340, country: 'Ghana' },
+];
+
+const WEEKLY = [
+  { week: 'Wk 1', streams: 2100 }, { week: 'Wk 2', streams: 3400 },
+  { week: 'Wk 3', streams: 5200 }, { week: 'Wk 4', streams: 7100 },
+  { week: 'Wk 5', streams: 8900 }, { week: 'Wk 6', streams: 11200 },
+  { week: 'Wk 7', streams: 9800 }, { week: 'Wk 8', streams: 13400 },
+];
+
+const CITIES = [
+  { city: 'Lagos', listeners: 14200 },
+  { city: 'Abuja', listeners: 6100 },
+  { city: 'Accra', listeners: 3400 },
+  { city: 'London', listeners: 2890 },
+  { city: 'Port Harcourt', listeners: 1980 },
+];
+
+function aggregateBy(rows, key, valueKey) {
+  const map = {};
+  rows.forEach(r => { map[r[key]] = (map[r[key]] || 0) + r[valueKey]; });
+  return Object.entries(map).map(([k, v]) => ({ key: k, value: v }));
+}
+
+function weightedSkipRate(rows) {
+  const totalStreams = rows.reduce((a, r) => a + r.streams, 0);
+  const weighted = rows.reduce((a, r) => a + r.skipRate * r.streams, 0);
+  return totalStreams ? weighted / totalStreams : 0;
+}
+
+export default function JayVrexDashboard() {
+  const [platformFilter, setPlatformFilter] = useState('All');
+
+  const filtered = useMemo(
+    () => platformFilter === 'All' ? TRACKS : TRACKS.filter(t => t.platform === platformFilter),
+    [platformFilter]
+  );
+
+  const totalStreams = filtered.reduce((a, t) => a + t.streams, 0);
+  const totalSaves = filtered.reduce((a, t) => a + t.saves, 0);
+  const avgSkip = weightedSkipRate(filtered);
+  const avgCompletion = filtered.length ? filtered.reduce((a, t) => a + t.completion, 0) / filtered.length : 0;
+
+  const byPlatform = aggregateBy(TRACKS, 'platform', 'streams');
+  const byTrack = aggregateBy(filtered, 'name', 'streams');
+  const maxWeekly = Math.max(...WEEKLY.map(w => w.streams));
+  const maxCity = Math.max(...CITIES.map(c => c.listeners));
+  const maxPlatform = Math.max(...byPlatform.map(p => p.value));
+  const maxTrack = Math.max(...byTrack.map(t => t.value), 1);
+
+  const platforms = ['All', ...Array.from(new Set(TRACKS.map(t => t.platform)))];
+
+  const skipColor = avgSkip < 0.18 ? '#D4A24C' : avgSkip < 0.25 ? '#C97B3D' : '#B5453A';
+
+  return (
+    <div style={{ background: '#15130F', minHeight: '100vh', fontFamily: "'Inter', system-ui, sans-serif", color: '#EDE6D6', padding: '28px 18px 60px' }}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+        .num { font-family: 'JetBrains Mono', monospace; }
+        .bar-fill { transition: width 0.6s ease; }
+        .card { background: #1C1914; border: 1px solid #2B2620; border-radius: 10px; }
+        .pill { transition: all 0.15s ease; }
+      `}</style>
+
+      <div style={{ marginBottom: 22 }}>
+        <div className="num" style={{ fontSize: 11, color: '#8A7E68', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 6 }}>
+          A&amp;R Tracking · JayVrex
+        </div>
+        <h1 style={{ fontSize: 26, fontWeight: 800, margin: 0, color: '#F4EFE3', letterSpacing: -0.5 }}>
+          Streaming Performance
+        </h1>
+        <div style={{ fontSize: 13, color: '#9C8F76', marginTop: 4 }}>
+          Afrobeats / Afrohouse catalog · Last 8 weeks
+        </div>
+      </div>
+
+      <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}>
+        {platforms.map(p => (
+          <button
+            key={p}
+            onClick={() => setPlatformFilter(p)}
+            className="pill"
+            style={{
+              padding: '7px 14px', borderRadius: 999, fontSize: 12.5, fontWeight: 600,
+              border: platformFilter === p ? '1px solid #D4A24C' : '1px solid #2B2620',
+              background: platformFilter === p ? 'rgba(212,162,76,0.12)' : 'transparent',
+              color: platformFilter === p ? '#D4A24C' : '#9C8F76', cursor: 'pointer'
+            }}
+          >
+            {p}
+          </button>
+        ))}
+      </div>
+
+      {/* Hero: total streams, the viral number */}
+      <div className="card" style={{ padding: '20px 16px', marginBottom: 10, position: 'relative', overflow: 'hidden' }}>
+        <div style={{
+          position: 'absolute', top: -40, right: -40, width: 140, height: 140, borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(212,162,76,0.18), transparent 70%)'
+        }} />
+        <div style={{ fontSize: 11, color: '#8A7E68', textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 8 }}>
+          Total Streams · All Platforms
+        </div>
+        <div className="num" style={{ fontSize: 46, fontWeight: 800, color: '#F4EFE3', lineHeight: 1, letterSpacing: -1 }}>
+          {totalStreams.toLocaleString()}
+        </div>
+        <div style={{ display: 'flex', gap: 18, marginTop: 12 }}>
+          <div>
+            <div className="num" style={{ fontSize: 17, fontWeight: 700, color: '#D4A24C' }}>{totalSaves.toLocaleString()}</div>
+            <div style={{ fontSize: 11, color: '#8A7E68' }}>Saves</div>
+          </div>
+          <div>
+            <div className="num" style={{ fontSize: 17, fontWeight: 700, color: '#D4A24C' }}>+68%</div>
+            <div style={{ fontSize: 11, color: '#8A7E68' }}>vs. last 8wk</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Signature element: skip rate as the analyst insight card */}
+      <div className="card" style={{ padding: '16px 16px', marginBottom: 14, borderColor: '#3A3326' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
+          <div>
+            <div style={{ fontSize: 10.5, color: '#D4A24C', textTransform: 'uppercase', letterSpacing: 1, fontWeight: 600 }}>↳ A&amp;R Insight</div>
+            <div style={{ fontSize: 12, color: '#9C8F76', marginTop: 2 }}>Skip rate · stream-weighted, lower is better</div>
+          </div>
+          <div className="num" style={{ fontSize: 24, fontWeight: 800, color: skipColor }}>
+            {(avgSkip * 100).toFixed(1)}%
+          </div>
+        </div>
+        <div style={{ height: 7, background: '#2B2620', borderRadius: 4, overflow: 'hidden' }}>
+          <div className="bar-fill" style={{ height: '100%', width: `${avgSkip * 100}%`, background: skipColor, borderRadius: 4 }} />
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 9, fontSize: 12 }}>
+          <span style={{ color: '#9C8F76' }}>Avg completion rate</span>
+          <span className="num" style={{ color: '#D4A24C', fontWeight: 600 }}>{(avgCompletion * 100).toFixed(0)}%</span>
+        </div>
+      </div>
+
+      {/* Weekly trend */}
+      <div className="card" style={{ padding: '16px 14px', marginBottom: 14 }}>
+        <div style={{ fontSize: 11, color: '#8A7E68', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 14 }}>Weekly Stream Growth</div>
+        <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6, height: 100 }}>
+          {WEEKLY.map((w, i) => (
+            <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+              <div className="bar-fill" style={{
+                width: '100%', height: `${(w.streams / maxWeekly) * 80}px`,
+                background: i === WEEKLY.length - 1 ? '#D4A24C' : '#4A6B68',
+                borderRadius: '3px 3px 0 0'
+              }} />
+              <div style={{ fontSize: 9, color: '#6B6151' }} className="num">{w.week.replace('Wk ', 'W')}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 14 }}>
+        {/* By track */}
+        <div className="card" style={{ padding: '16px 14px' }}>
+          <div style={{ fontSize: 11, color: '#8A7E68', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 }}>Streams by Track</div>
+          {byTrack.map((t, i) => (
+            <div key={i} style={{ marginBottom: 10 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12.5, marginBottom: 4 }}>
+                <span style={{ color: '#EDE6D6', fontWeight: 500 }}>{t.key}</span>
+                <span className="num" style={{ color: '#9C8F76' }}>{t.value.toLocaleString()}</span>
+              </div>
+              <div style={{ height: 6, background: '#2B2620', borderRadius: 3 }}>
+                <div className="bar-fill" style={{ height: '100%', width: `${(t.value / maxTrack) * 100}%`, background: '#D4A24C', borderRadius: 3 }} />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* By platform donut-ish bars */}
+        <div className="card" style={{ padding: '16px 14px' }}>
+          <div style={{ fontSize: 11, color: '#8A7E68', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 }}>Streams by Platform</div>
+          {byPlatform.map((p, i) => (
+            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 9 }}>
+              <div style={{ width: 84, fontSize: 12, color: '#9C8F76' }}>{p.key}</div>
+              <div style={{ flex: 1, height: 6, background: '#2B2620', borderRadius: 3 }}>
+                <div className="bar-fill" style={{ height: '100%', width: `${(p.value / maxPlatform) * 100}%`, background: '#4A6B68', borderRadius: 3 }} />
+              </div>
+              <div className="num" style={{ width: 56, textAlign: 'right', fontSize: 12, color: '#EDE6D6' }}>{p.value.toLocaleString()}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Top cities */}
+        <div className="card" style={{ padding: '16px 14px' }}>
+          <div style={{ fontSize: 11, color: '#8A7E68', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 }}>Top Listener Cities</div>
+          {CITIES.map((c, i) => (
+            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 9 }}>
+              <div style={{ width: 90, fontSize: 12, color: '#9C8F76' }}>{c.city}</div>
+              <div style={{ flex: 1, height: 6, background: '#2B2620', borderRadius: 3 }}>
+                <div className="bar-fill" style={{ height: '100%', width: `${(c.listeners / maxCity) * 100}%`, background: '#B5453A', borderRadius: 3 }} />
+              </div>
+              <div className="num" style={{ width: 50, textAlign: 'right', fontSize: 12, color: '#EDE6D6' }}>{c.listeners.toLocaleString()}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div style={{ marginTop: 18, fontSize: 11, color: '#5A5142', textAlign: 'center' }}>
+        Sample data for portfolio demonstration · built by JayVirtual
+      </div>
+    </div>
+  );
+}
